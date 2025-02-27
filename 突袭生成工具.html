@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>突袭时间配置工具</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- 引入Font Awesome图标库 -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .box {
+            width: 1000px;
+            max-width: 90%;
+            background-color: #fff;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 1rem;
+            text-align: center;
+            text-shadow: none;
+        }
+
+        .content {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        button {
+            padding: 0.8rem 1.5rem;
+            font-size: 1rem;
+            color: #fff;
+            background-color: #007bff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .config-item {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        select,
+        input {
+            width: 180px;
+            height: 30px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+
+        .fa-plus {
+            margin-right: 0.5rem;
+        }
+
+        .sm {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            user-select: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="box">
+        <h1>突袭时间配置工具</h1>
+        <div class="content">
+            <button id="tj"><i class="fas fa-plus"></i> 添加配置</button>
+            <div id="box-content">
+            </div>
+            <button id="generateJson"><i class="far fa-save" style="margin-right: 5px;"></i>生成文件</button>
+        </div>
+
+    </div>
+    <p class="sm">初梦梦制作</p>
+    <script>
+        document.getElementById('tj').addEventListener('click', function () {
+            const boxContent = document.getElementById('box-content');
+            const configItem = `
+                <div class="config-item">
+                    <select name="day">
+                        <option value="Monday">周一</option>
+                        <option value="Tuesday">周二</option>
+                        <option value="Wednesday">周三</option>
+                        <option value="Thursday">周四</option>
+                        <option value="Friday">周五</option>
+                        <option value="Saturday">周六</option>
+                        <option value="Sunday">周日</option>
+                        <option value="Weekdays">周一到周五</option>
+                        <option value="Weekend">周六到周日</option>
+                    </select>
+                    <input type="text" placeholder="开始时间" name="start-time">
+                    <input type="text" placeholder="结束时间" name="end-time">
+                    <input type="text" placeholder="开始前多少分钟发送公告" name="start-announcement-time">
+                    <input type="text" placeholder="结束前多少分钟发送公告" name="end-announcement-time">
+                </div>
+            `;
+            boxContent.insertAdjacentHTML('beforeend', configItem);
+        });
+
+        function adjustTimeForUTC8(timeStr) {
+            let [hours, minutes] = timeStr.split(':').map(Number);
+            hours = ((hours - 8 + 24) % 24); // 减去8小时并处理可能的负值或跨天情况
+            return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+        }
+
+        function adjustTimeForUTC8(timeStr) {
+            let [hours, minutes = '00'] = timeStr.split(':').map(part => part || '00'); // 如果分钟缺失，默认为00
+            hours = parseInt(hours, 10);
+            hours = ((hours - 8 + 24) % 24);
+            return `${hours.toString().padStart(2, '0')}:${minutes.padStart(2, '0')}`;
+        }
+        function processConfigItem(item) {
+            const day = item.querySelector('select[name="day"]').value;
+            const startTimeRaw = item.querySelector('input[name="start-time"]').value;
+            const endTimeRaw = item.querySelector('input[name="end-time"]').value;
+            const startTimeAdjusted = adjustTimeForUTC8(startTimeRaw);
+            const endTimeAdjusted = adjustTimeForUTC8(endTimeRaw);
+            const startAnnouncementTime = item.querySelector('input[name="start-announcement-time"]').value;
+            const endAnnouncementTime = item.querySelector('input[name="end-announcement-time"]').value;
+
+            return {
+                "day": day,
+                "time": `${startTimeAdjusted}-${endTimeAdjusted}`,
+                "start-announcement-time": startAnnouncementTime,
+                "end-announcement-time": endAnnouncementTime
+            };
+        }
+
+        document.getElementById('generateJson').addEventListener('click', function () {
+            const configItems = document.querySelectorAll('.config-item');
+            const jsonData = { "raiding-times": Array.from(configItems).map(processConfigItem) };
+            const blob = new Blob([JSON.stringify(jsonData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+
+            link.href = url;
+            link.download = 'RaidTimes.json';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            alert('服务器路径文件路径为：/SCUM/Saved/Config/WindowsServer\n找到此路径下的RaidTimes.json文件并替换即可');
+        });
+
+    </script>
+</body>
+
+</html>
