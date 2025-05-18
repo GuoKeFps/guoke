@@ -84,6 +84,25 @@
             right: 20px;
             user-select: none;
         }
+        
+        /* 添加复制成功提示的样式 */
+        .copy-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 4px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 100;
+        }
+        
+        .copy-notification.show {
+            opacity: 1;
+        }
     </style>
 </head>
 
@@ -94,11 +113,15 @@
             <button id="tj"><i class="fas fa-plus"></i> 添加配置</button>
             <div id="box-content">
             </div>
-            <button id="generateJson"><i class="far fa-save" style="margin-right: 5px;"></i>生成文件</button>
+            <button id="copyToClipboard"><i class="fas fa-copy" style="margin-right: 5px;"></i>复制配置内容</button>
         </div>
 
     </div>
     <p class="sm">SCUM-XX管理员工具  QQ群：685098660  本网页作者：初梦梦</p>
+    
+    <!-- 复制成功提示 -->
+    <div id="copyNotification" class="copy-notification">配置内容已复制到剪贴板！</div>
+    
     <script>
         document.getElementById('tj').addEventListener('click', function () {
             const boxContent = document.getElementById('box-content');
@@ -125,17 +148,12 @@
         });
 
         function adjustTimeForUTC8(timeStr) {
-            let [hours, minutes] = timeStr.split(':').map(Number);
-            hours = ((hours - 8 + 24) % 24); // 减去8小时并处理可能的负值或跨天情况
-            return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-        }
-
-        function adjustTimeForUTC8(timeStr) {
             let [hours, minutes = '00'] = timeStr.split(':').map(part => part || '00'); // 如果分钟缺失，默认为00
             hours = parseInt(hours, 10);
             hours = ((hours - 8 + 24) % 24);
             return `${hours.toString().padStart(2, '0')}:${minutes.padStart(2, '0')}`;
         }
+
         function processConfigItem(item) {
             const day = item.querySelector('select[name="day"]').value;
             const startTimeRaw = item.querySelector('input[name="start-time"]').value;
@@ -153,23 +171,32 @@
             };
         }
 
-        document.getElementById('generateJson').addEventListener('click', function () {
+        document.getElementById('copyToClipboard').addEventListener('click', function () {
             const configItems = document.querySelectorAll('.config-item');
             const jsonData = { "raiding-times": Array.from(configItems).map(processConfigItem) };
-            const blob = new Blob([JSON.stringify(jsonData, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-
-            link.href = url;
-            link.download = 'RaidTimes.json';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-            alert('服务器路径文件路径为：/SCUM/Saved/Config/WindowsServer\n找到此路径下的RaidTimes.json文件并替换即可');
+            const jsonString = JSON.stringify(jsonData, null, 2);
+            
+            // 复制到剪贴板
+            navigator.clipboard.writeText(jsonString).then(function() {
+                // 显示复制成功提示
+                const notification = document.getElementById('copyNotification');
+                notification.classList.add('show');
+                
+                // 3秒后隐藏提示
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                }, 3000);
+                
+                // 显示详细提示
+                alert('配置内容已复制到剪贴板！\n\n服务器路径文件路径为：/SCUM/Saved/Config/WindowsServer\n找到此路径下的RaidTimes.json文件并替换即可');
+            }).catch(function(err) {
+                console.error('复制失败: ', err);
+                alert('复制失败，请手动复制：' + jsonString);
+            });
         });
 
     </script>
 </body>
 
 </html>
+    
