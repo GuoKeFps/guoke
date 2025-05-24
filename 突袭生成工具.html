@@ -1,202 +1,523 @@
-<!DOCTYPE html>
-<html lang="en">
-
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>突袭时间配置工具</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- 引入Font Awesome图标库 -->
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f0f2f5;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
+    <title>SCUM-XX突袭时间配置</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#165DFF',
+                        secondary: '#0FC6C2',
+                        accent: '#722ED1',
+                        dark: '#1D2129',
+                        light: '#F2F3F5',
+                        success: '#00B42A',
+                        warning: '#FF7D00',
+                        danger: '#F53F3F',
+                        info: '#86909C'
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'card': '0 10px 30px -5px rgba(0, 0, 0, 0.1)',
+                        'button': '0 4px 14px 0 rgba(22, 93, 255, 0.4)'
+                    }
+                },
+            }
         }
-
-        .box {
-            width: 1000px;
-            max-width: 90%;
-            background-color: #fff;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            border-radius: 8px;
-            padding: 2rem;
-            display: flex;
-            flex-direction: column;
-        }
-
-        h1 {
-            color: #333;
-            margin-bottom: 1rem;
-            text-align: center;
-            text-shadow: none;
-        }
-
-        .content {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-
-        button {
-            padding: 0.8rem 1.5rem;
-            font-size: 1rem;
-            color: #fff;
-            background-color: #007bff;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        button:hover {
-            background-color: #0056b3;
-        }
-
-        .config-item {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 1rem;
-            margin-bottom: 1rem;
-        }
-
-        select,
-        input {
-            width: 180px;
-            height: 30px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 0.9rem;
-            text-align: center;
-        }
-
-        .fa-plus {
-            margin-right: 0.5rem;
-        }
-
-        .sm {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            user-select: none;
-        }
-        
-        /* 添加复制成功提示的样式 */
-        .copy-notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background-color: #4CAF50;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 4px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            z-index: 100;
-        }
-        
-        .copy-notification.show {
-            opacity: 1;
+    </script>
+    
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .bg-gradient-blue {
+                background: linear-gradient(135deg, #165DFF 0%, #0FC6C2 100%);
+            }
+            .text-gradient {
+                background-clip: text;
+                -webkit-background-clip: text;
+                color: transparent;
+                background-image: linear-gradient(135deg, #165DFF 0%, #722ED1 100%);
+            }
+            .card-hover {
+                transition: all 0.3s ease;
+            }
+            .card-hover:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.15);
+            }
+            .btn-hover {
+                transition: all 0.2s ease;
+            }
+            .btn-hover:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 18px 0 rgba(22, 93, 255, 0.5);
+            }
+            .input-focus {
+                transition: all 0.2s ease;
+            }
+            .input-focus:focus {
+                border-color: #165DFF;
+                box-shadow: 0 0 0 2px rgba(22, 93, 255, 0.2);
+            }
         }
     </style>
 </head>
-
-<body>
-    <div class="box">
-        <h1>突袭时间配置工具</h1>
-        <div class="content">
-            <button id="tj"><i class="fas fa-plus"></i> 添加配置</button>
-            <div id="box-content">
+<body class="font-inter bg-gray-50 text-dark min-h-screen flex flex-col">
+    <!-- 顶部导航 -->
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <i class="fa fa-shield text-primary text-2xl"></i>
+                <h1 class="text-xl font-bold text-gradient">SCUM 突袭设置</h1>
             </div>
-            <button id="copyToClipboard"><i class="fas fa-copy" style="margin-right: 5px;"></i>复制配置内容</button>
+            <div class="flex items-center space-x-4">
+                <button class="hidden md:block text-gray-600 hover:text-primary transition-colors">
+                    <i class="fa fa-question-circle"></i>
+                </button>
+                <button class="hidden md:block text-gray-600 hover:text-primary transition-colors">
+                    <i class="fa fa-user-circle"></i>
+                </button>
+                <button class="md:hidden text-gray-600">
+                    <i class="fa fa-bars"></i>
+                </button>
+            </div>
         </div>
+    </header>
 
+    <!-- 主要内容 -->
+    <main class="flex-grow container mx-auto px-4 py-8">
+        <div class="max-w-5xl mx-auto">
+            <!-- 页面标题 -->
+            <div class="text-center mb-10">
+                <h2 class="text-[clamp(1.8rem,4vw,2.5rem)] font-bold text-dark mb-2">突袭时间配置工具</h2>
+                <p class="text-gray-500 max-w-2xl mx-auto">快速配置服务器突袭时间，支持多时间段设置，自动转换为服务器时区</p>
+            </div>
+            
+            <!-- 配置卡片 -->
+            <div class="bg-white rounded-2xl shadow-card p-6 mb-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-semibold text-dark">配置设置</h3>
+                    <button id="addConfig" class="bg-primary text-white px-4 py-2 rounded-lg flex items-center btn-hover">
+                        <i class="fa fa-plus mr-2"></i>添加配置
+                    </button>
+                </div>
+                
+                <div id="configContainer" class="space-y-4">
+                    <!-- 配置项将动态添加到这里 -->
+                </div>
+                
+                <div class="mt-8">
+                    <button id="generateScheme" class="w-full bg-gradient-blue text-white py-3 rounded-xl font-medium flex items-center justify-center btn-hover">
+                        <i class="fa fa-cogs mr-2"></i>生成突袭方案
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 结果展示 -->
+            <div class="bg-white rounded-2xl shadow-card p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-semibold text-dark">配置结果</h3>
+                    <div class="flex space-x-2">
+                        <button id="copyResult" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded-lg flex items-center transition-colors">
+                            <i class="fa fa-copy mr-1"></i>复制
+                        </button>
+                        <button id="downloadResult" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded-lg flex items-center transition-colors">
+                            <i class="fa fa-download mr-1"></i>下载
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="bg-gray-50 rounded-xl p-4 overflow-x-auto">
+                    <pre id="resultDisplay" class="font-mono text-sm text-gray-800 whitespace-pre-wrap break-words min-h-[200px]"></pre>
+                </div>
+                
+                <div class="mt-4 text-sm text-gray-500">
+                    <p>首先进入自己的GG服务器后台【不是租服务器的网页哦！】1. 打开Configuration Files【配置文件】2. 找到RaidTimes.json【第四行】3. 点击Text Editor【文本编辑】4. 清空里面内容，把我们复制的代码放进去 5. 最后点击左上角save【保存】然后等服务器重启或者手动重启。  注：其它服务器没弄过，自己研究把。</code></p>
+                </div>
+            </div>
+            
+            <!-- 配置统计 -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
+                <div class="bg-white rounded-xl shadow-sm p-5 card-hover">
+                    <div class="flex items-center justify-between">
+                        <h4 class="font-medium text-gray-600">配置数量</h4>
+                        <span class="bg-blue-100 text-primary p-2 rounded-full">
+                            <i class="fa fa-list"></i>
+                        </span>
+                    </div>
+                    <p id="configCount" class="text-3xl font-bold mt-2">0</p>
+                </div>
+                
+                <div class="bg-white rounded-xl shadow-sm p-5 card-hover">
+                    <div class="flex items-center justify-between">
+                        <h4 class="font-medium text-gray-600">配置天数</h4>
+                        <span class="bg-green-100 text-success p-2 rounded-full">
+                            <i class="fa fa-calendar"></i>
+                        </span>
+                    </div>
+                    <p id="activeDays" class="text-3xl font-bold mt-2">0</p>
+                </div>
+                
+                <div class="bg-white rounded-xl shadow-sm p-5 card-hover">
+                    <div class="flex items-center justify-between">
+                        <h4 class="font-medium text-gray-600">突袭时长</h4>
+                        <span class="bg-purple-100 text-accent p-2 rounded-full">
+                            <i class="fa fa-clock-o"></i>
+                        </span>
+                    </div>
+                    <p id="totalHours" class="text-3xl font-bold mt-2">0小时</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-dark text-white py-8 mt-12">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">SCUM 管理工具</h3>
+                    <p class="text-gray-400">提供便捷的服务器管理，让游戏管理更加高效。</p>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">联系我们</h3>
+                    <ul class="space-y-2">
+                        <li class="flex items-center text-gray-400">
+                            <i class="fa fa-qq mr-2"></i>QQ群：685098660
+                        </li>
+                        <li class="flex items-center text-gray-400">
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-gray-800 mt-8 pt-6 text-center text-gray-500 text-sm">
+                <p>© 2025 SCUM 突袭工具 - 更多工具加QQ群：685098660</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 通知组件 -->
+    <div id="notification" class="fixed top-4 right-4 bg-white rounded-lg shadow-lg p-4 transform translate-x-full transition-transform duration-300 flex items-center max-w-xs z-50">
+        <div id="notificationIcon" class="w-8 h-8 rounded-full flex items-center justify-center mr-3">
+            <i class="fa fa-check text-white"></i>
+        </div>
+        <div>
+            <h4 id="notificationTitle" class="font-medium text-dark">操作成功</h4>
+            <p id="notificationMessage" class="text-sm text-gray-600">配置已生成</p>
+        </div>
+        <button id="closeNotification" class="ml-4 text-gray-400 hover:text-gray-600">
+            <i class="fa fa-times"></i>
+        </button>
     </div>
-    <p class="sm">SCUM-XX管理员工具  QQ群：685098660  本网页作者：初梦梦</p>
-    
-    <!-- 复制成功提示 -->
-    <div id="copyNotification" class="copy-notification">配置内容已复制到剪贴板！</div>
-    
+
     <script>
-        document.getElementById('tj').addEventListener('click', function () {
-            const boxContent = document.getElementById('box-content');
-            const configItem = `
-                <div class="config-item">
-                    <select name="day">
-                        <option value="Monday">周一</option>
-                        <option value="Tuesday">周二</option>
-                        <option value="Wednesday">周三</option>
-                        <option value="Thursday">周四</option>
-                        <option value="Friday">周五</option>
-                        <option value="Saturday">周六</option>
-                        <option value="Sunday">周日</option>
-                        <option value="Weekdays">周一到周五</option>
-                        <option value="Weekend">周六到周日</option>
-                    </select>
-                    <input type="text" placeholder="开始时间" name="start-time">
-                    <input type="text" placeholder="结束时间" name="end-time">
-                    <input type="text" placeholder="开始前多少分钟发送公告" name="start-announcement-time">
-                    <input type="text" placeholder="结束前多少分钟发送公告" name="end-announcement-time">
+        // 初始化配置项容器
+        const configContainer = document.getElementById('configContainer');
+        const addConfigBtn = document.getElementById('addConfig');
+        const generateSchemeBtn = document.getElementById('generateScheme');
+        const resultDisplay = document.getElementById('resultDisplay');
+        const configCountEl = document.getElementById('configCount');
+        const activeDaysEl = document.getElementById('activeDays');
+        const totalHoursEl = document.getElementById('totalHours');
+        const copyResultBtn = document.getElementById('copyResult');
+        const downloadResultBtn = document.getElementById('downloadResult');
+        const notification = document.getElementById('notification');
+        const notificationTitle = document.getElementById('notificationTitle');
+        const notificationMessage = document.getElementById('notificationMessage');
+        const notificationIcon = document.getElementById('notificationIcon');
+        const closeNotification = document.getElementById('closeNotification');
+        
+        // 初始添加一个配置项
+        addNewConfigItem();
+        
+        // 添加配置项
+        addConfigBtn.addEventListener('click', addNewConfigItem);
+        
+        // 生成方案
+        generateSchemeBtn.addEventListener('click', generateScheme);
+        
+        // 复制结果
+        copyResultBtn.addEventListener('click', copyResult);
+        
+        // 下载结果
+        downloadResultBtn.addEventListener('click', downloadResult);
+        
+        // 关闭通知
+        closeNotification.addEventListener('click', () => {
+            notification.classList.add('translate-x-full');
+        });
+        
+        // 添加新配置项
+        function addNewConfigItem() {
+            const configItem = document.createElement('div');
+            configItem.className = 'bg-gray-50 rounded-xl p-5 card-hover';
+            configItem.innerHTML = `
+                <div class="flex justify-between items-start mb-4">
+                    <h4 class="font-medium text-dark">突袭时间段 #${configContainer.children.length + 1}</h4>
+                    <button class="deleteConfig text-gray-400 hover:text-danger transition-colors">
+                        <i class="fa fa-trash"></i>
+                    </button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">突袭日期</label>
+                        <select class="w-full p-2 border border-gray-300 rounded-lg input-focus">
+                            <option value="Monday">周一</option>
+                            <option value="Tuesday">周二</option>
+                            <option value="Wednesday">周三</option>
+                            <option value="Thursday">周四</option>
+                            <option value="Friday">周五</option>
+                            <option value="Saturday">周六</option>
+                            <option value="Sunday">周日</option>
+                            <option value="Weekdays">周一到周五</option>
+                            <option value="Weekend">周六到周日</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">开始时间</label>
+                        <input type="text" placeholder="例如: 12:00" class="w-full p-2 border border-gray-300 rounded-lg input-focus">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">结束时间</label>
+                        <input type="text" placeholder="例如: 14:00" class="w-full p-2 border border-gray-300 rounded-lg input-focus">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">开始前公告</label>
+                        <input type="number" placeholder="分钟" class="w-full p-2 border border-gray-300 rounded-lg input-focus">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">结束前公告</label>
+                        <input type="number" placeholder="分钟" class="w-full p-2 border border-gray-300 rounded-lg input-focus">
+                    </div>
                 </div>
             `;
-            boxContent.insertAdjacentHTML('beforeend', configItem);
-        });
-
+            
+            configContainer.appendChild(configItem);
+            
+            // 添加删除事件
+            const deleteBtn = configItem.querySelector('.deleteConfig');
+            deleteBtn.addEventListener('click', () => {
+                configItem.classList.add('opacity-0');
+                setTimeout(() => {
+                    configItem.remove();
+                    updateConfigNumbers();
+                    updateStatistics();
+                }, 300);
+            });
+            
+            // 淡入动画
+            configItem.classList.add('opacity-0', 'translate-y-4');
+            setTimeout(() => {
+                configItem.classList.remove('opacity-0', 'translate-y-4');
+            }, 10);
+            
+            updateStatistics();
+        }
+        
+        // 更新配置项编号
+        function updateConfigNumbers() {
+            const configItems = configContainer.querySelectorAll('.card-hover');
+            configItems.forEach((item, index) => {
+                item.querySelector('h4').textContent = `突袭时间段 #${index + 1}`;
+            });
+        }
+        
+        // 处理时间转换 (UTC+8 转换)
         function adjustTimeForUTC8(timeStr) {
-            let [hours, minutes = '00'] = timeStr.split(':').map(part => part || '00'); // 如果分钟缺失，默认为00
+            if (!timeStr) return '00:00';
+            
+            let [hours, minutes = '00'] = timeStr.split(':').map(part => part.trim() || '00');
             hours = parseInt(hours, 10);
+            
+            // 处理24小时制时间
+            if (hours >= 24) {
+                hours = hours % 24;
+            }
+            
+            // 转换为UTC时间
             hours = ((hours - 8 + 24) % 24);
+            
             return `${hours.toString().padStart(2, '0')}:${minutes.padStart(2, '0')}`;
         }
-
-        function processConfigItem(item) {
-            const day = item.querySelector('select[name="day"]').value;
-            const startTimeRaw = item.querySelector('input[name="start-time"]').value;
-            const endTimeRaw = item.querySelector('input[name="end-time"]').value;
-            const startTimeAdjusted = adjustTimeForUTC8(startTimeRaw);
-            const endTimeAdjusted = adjustTimeForUTC8(endTimeRaw);
-            const startAnnouncementTime = item.querySelector('input[name="start-announcement-time"]').value;
-            const endAnnouncementTime = item.querySelector('input[name="end-announcement-time"]').value;
-
-            return {
-                "day": day,
-                "time": `${startTimeAdjusted}-${endTimeAdjusted}`,
-                "start-announcement-time": startAnnouncementTime,
-                "end-announcement-time": endAnnouncementTime
-            };
+        
+        // 计算两个时间点之间的小时数
+        function calculateHours(startTime, endTime) {
+            if (!startTime || !endTime) return 0;
+            
+            const [startHours, startMinutes] = startTime.split(':').map(Number);
+            const [endHours, endMinutes] = endTime.split(':').map(Number);
+            
+            const startTotalMinutes = startHours * 60 + startMinutes;
+            const endTotalMinutes = endHours * 60 + endMinutes;
+            
+            // 如果结束时间早于开始时间，说明跨天了
+            if (endTotalMinutes < startTotalMinutes) {
+                return ((24 * 60) - startTotalMinutes + endTotalMinutes) / 60;
+            }
+            
+            return (endTotalMinutes - startTotalMinutes) / 60;
         }
-
-        document.getElementById('copyToClipboard').addEventListener('click', function () {
-            const configItems = document.querySelectorAll('.config-item');
-            const jsonData = { "raiding-times": Array.from(configItems).map(processConfigItem) };
+        
+        // 生成方案
+        function generateScheme() {
+            const configItems = configContainer.querySelectorAll('.card-hover');
+            
+            if (configItems.length === 0) {
+                showNotification('请至少添加一个配置项', 'error');
+                return;
+            }
+            
+            const configData = Array.from(configItems).map((item, index) => {
+                const select = item.querySelector('select');
+                const inputs = item.querySelectorAll('input');
+                
+                const day = select.value;
+                const startTime = inputs[0].value.trim();
+                const endTime = inputs[1].value.trim();
+                const startAnnouncement = inputs[2].value.trim() || '0';
+                const endAnnouncement = inputs[3].value.trim() || '0';
+                
+                // 验证时间格式
+                if (!startTime || !endTime) {
+                    showNotification(`配置 #${index + 1} 的时间不能为空`, 'error');
+                    throw new Error(`配置 #${index + 1} 的时间不能为空`);
+                }
+                
+                if (!/^\d{1,2}:\d{2}$/.test(startTime) || !/^\d{1,2}:\d{2}$/.test(endTime)) {
+                    showNotification(`配置 #${index + 1} 的时间格式不正确 (示例: 12:30)`, 'error');
+                    throw new Error(`配置 #${index + 1} 的时间格式不正确`);
+                }
+                
+                return {
+                    "day": day,
+                    "time": `${adjustTimeForUTC8(startTime)}-${adjustTimeForUTC8(endTime)}`,
+                    "start-announcement-time": startAnnouncement,
+                    "end-announcement-time": endAnnouncement
+                };
+            });
+            
+            const jsonData = { "raiding-times": configData };
             const jsonString = JSON.stringify(jsonData, null, 2);
             
-            // 复制到剪贴板
-            navigator.clipboard.writeText(jsonString).then(function() {
-                // 显示复制成功提示
-                const notification = document.getElementById('copyNotification');
-                notification.classList.add('show');
+            // 显示结果
+            resultDisplay.textContent = jsonString;
+            
+            // 平滑滚动到结果区域
+            resultDisplay.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            
+            // 添加高亮动画
+            resultDisplay.classList.add('bg-blue-50');
+            setTimeout(() => {
+                resultDisplay.classList.remove('bg-blue-50');
+            }, 1000);
+            
+            showNotification('突袭方案已生成', 'success');
+            updateStatistics();
+        }
+        
+        // 复制结果
+        function copyResult() {
+            if (!resultDisplay.textContent) {
+                showNotification('没有可复制的内容', 'error');
+                return;
+            }
+            
+            navigator.clipboard.writeText(resultDisplay.textContent)
+                .then(() => {
+                    showNotification('配置内容已复制到剪贴板', 'success');
+                })
+                .catch(err => {
+                    showNotification('复制失败，请手动复制', 'error');
+                    console.error('复制失败: ', err);
+                });
+        }
+        
+        // 下载结果
+        function downloadResult() {
+            if (!resultDisplay.textContent) {
+                showNotification('没有可下载的内容', 'error');
+                return;
+            }
+            
+            const blob = new Blob([resultDisplay.textContent], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'RaidTimes.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showNotification('配置文件已下载', 'success');
+        }
+        
+        // 显示通知
+        function showNotification(message, type = 'success') {
+            notificationTitle.textContent = type === 'success' ? '操作成功' : '操作失败';
+            notificationMessage.textContent = message;
+            
+            if (type === 'success') {
+                notificationIcon.className = 'w-8 h-8 rounded-full flex items-center justify-center mr-3 bg-success';
+                notificationIcon.innerHTML = '<i class="fa fa-check text-white"></i>';
+            } else {
+                notificationIcon.className = 'w-8 h-8 rounded-full flex items-center justify-center mr-3 bg-danger';
+                notificationIcon.innerHTML = '<i class="fa fa-exclamation-triangle text-white"></i>';
+            }
+            
+            notification.classList.remove('translate-x-full');
+            
+            // 3秒后自动关闭
+            setTimeout(() => {
+                notification.classList.add('translate-x-full');
+            }, 3000);
+        }
+        
+        // 更新统计信息
+        function updateStatistics() {
+            const configItems = configContainer.querySelectorAll('.card-hover');
+            configCountEl.textContent = configItems.length;
+            
+            // 计算活跃日和总时长
+            const activeDays = new Set();
+            let totalHours = 0;
+            
+            configItems.forEach(item => {
+                const select = item.querySelector('select');
+                const inputs = item.querySelectorAll('input');
                 
-                // 3秒后隐藏提示
-                setTimeout(() => {
-                    notification.classList.remove('show');
-                }, 3000);
+                const day = select.value;
+                const startTime = inputs[0].value.trim();
+                const endTime = inputs[1].value.trim();
                 
-                // 显示详细提示
-                alert('配置内容已复制到剪贴板！\n\n服务器路径文件路径为：/SCUM/Saved/Config/WindowsServer\n找到此路径下的RaidTimes.json文件并替换即可');
-            }).catch(function(err) {
-                console.error('复制失败: ', err);
-                alert('复制失败，请手动复制：' + jsonString);
+                if (day && startTime && endTime) {
+                    if (day === 'Weekdays') {
+                        ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'].forEach(d => activeDays.add(d));
+                    } else if (day === 'Weekend') {
+                        ['Saturday', 'Sunday'].forEach(d => activeDays.add(d));
+                    } else {
+                        activeDays.add(day);
+                    }
+                    
+                    totalHours += calculateHours(startTime, endTime);
+                }
             });
-        });
-
+            
+            activeDaysEl.textContent = activeDays.size;
+            totalHoursEl.textContent = totalHours.toFixed(1) + '小时';
+        }
     </script>
 </body>
-
 </html>
-    
